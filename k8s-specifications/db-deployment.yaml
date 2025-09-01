@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  selector:
+    matchLabels:
+      app: db
+  replicas: 1
+  template:
+    metadata:
+      name: db
+      labels:
+        app: db
+    spec:
+      resources:
+        requests:
+          cpu: 2
+          memory: 100Mi
+        limits:
+          cpu: 0.2
+          memory: 50Mi
+      containers:
+        - name: postgres
+          image: postgres
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data    # The official PostgreSQL Docker image is built with PGDATA set to /var/lib/postgresql/data. This means PostgreSQL writes all database files (data directory, WAL logs, configs, etc.) there by default.
+              name: db-volume
+      volumes:
+        - name: db-volume
+          emptyDir: {}
+          
+
+# add a PVC for future reference 
+  # Why PVC
+  # You haven’t specified what kind of volume it is. So Kubernetes will default to using an emptyDir volume.
+  # emptyDir means:
+    # It lives on the node's ephemeral storage.
+    #  It is created when the Pod starts and deleted when the Pod stops.
+    # Data is lost when:
+      # The Pod is deleted or restarted.
+      # The Pod is rescheduled to another node.
+      # The node crashes or reboots.
+  # What happens with a PVC?
+    # Data is stored on a PersistentVolume — backed by:
+      # Local disk
+      # NFS
+      # Cloud storage (AWS EBS, GCP PD, Azure Disk, etc.)
+    # The data persists even if the Pod is deleted/recreated/moved.
+    # This is critical for databases like PostgreSQL where data durability matters.
+
+
+# Types of secrets
+  # type: Opaque (default)
+    # That just means it’s a generic key-value secret with no special meaning.
+  # type: kubernetes.io/service-account-token
+    # Used automatically for service accounts.
+    # Kubernetes injects the token for API access.
+  # type: kubernetes.io/dockerconfigjson
+    # Used for storing Docker registry credentials.
+    # Lets Kubernetes pull private images.
+  # kubernetes.io/tls
+    # For TLS certs and keys (e.g., Ingress).\
+    # Requires keys tls.crt and tls.key.
+  # bootstrap.kubernetes.io/token
+    # For kubelet bootstrap tokens.
+
+    

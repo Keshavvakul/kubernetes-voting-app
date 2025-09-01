@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-app-deployment
+  labels:
+    app: vote
+    type: frontend
+spec:
+  template:
+    metadata:
+      name: vote-app
+      labels:
+        app: vote
+        type: frontend
+    spec:
+      containers:
+        - name: vote-app
+          image: vote-app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: "2"
+              memory: 100Mi
+            requests:
+              cpu: "0.2"
+              memory: 50Mi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: disktype
+                    operator: In
+                    values:
+                      - ssd
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+
+# containerPort is purely informational. Kubernetes doesn’t enforce or expose it,it just documents what port your app is listening on.
+# It helps tools like kubectl describe pod or other UIs to show which ports are used.

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: result-app-deployment
+  labels:
+    app: result
+    type: frontend
+spec:
+  template:
+    metadata:
+      name: result-app
+      labels: 
+        app: result
+        type: frontend
+    spec:
+      containers:
+        - name: result-app
+          image: result-app 
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+  replicas: 1
+  selector:
+    matchLabels:
+      app: result
